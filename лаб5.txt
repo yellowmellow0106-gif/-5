@@ -1,0 +1,445 @@
+-- ЧАСТЬ 1. СОЗДАНИЕ СТРУКТУРЫ БД
+
+-- Создание таблиц, связей (ALTER TABLE) и вставка данных (INSERT INTO)
+-- Создание базы данных:
+CREATE DATABASE IF NOT EXISTS lukoil_support CHARACTER SET utf8mb4;
+-- Создание таблиц и связей:
+CREATE TABLE `customer` (
+    `customer` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `inn` VARCHAR(255) NOT NULL,
+    `contact_person` VARCHAR(255) NOT NULL,
+    `phone` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) NOT NULL,
+    `address` VARCHAR(255) NOT NULL,
+    `contract_date` DATE NOT NULL,
+    `status` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`customer`),
+    UNIQUE (`inn`)
+);
+
+CREATE TABLE `position` (
+    `position` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `salary` DECIMAL(10, 2) NOT NULL,
+    `grade` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`position`)
+);
+
+CREATE TABLE `department` (
+    `department` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `head_employee` INT NULL,
+    PRIMARY KEY (`department`)
+);
+
+CREATE TABLE `employee` (
+    `employee` INT NOT NULL AUTO_INCREMENT,
+    `full_name` VARCHAR(255) NOT NULL,
+    `department` INT NOT NULL,
+    `phone` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) NOT NULL,
+    `hire_date` DATE NOT NULL,
+    `status` VARCHAR(255) NOT NULL,
+    `position` INT NOT NULL,
+    PRIMARY KEY (`employee`)
+);
+
+CREATE TABLE `project` (
+    `project` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `type` VARCHAR(255) NOT NULL,
+    `description` TEXT NOT NULL,
+    `start_date` DATE NOT NULL,
+    `planned_end_date` DATE NOT NULL,
+    `manager` INT NOT NULL,
+    `status` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`project`)
+);
+
+CREATE TABLE `service` (
+    `service` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT NOT NULL,
+    `price` DECIMAL(10, 2) NOT NULL,
+    `effective_date` DATE NOT NULL,
+    PRIMARY KEY (`service`)
+);
+
+CREATE TABLE `equipment` (
+    `equipment` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `type` VARCHAR(255) NOT NULL,
+    `model` VARCHAR(255) NOT NULL,
+    `serial_number` VARCHAR(255) NOT NULL,
+    `commission_date` DATE NOT NULL,
+    `department` INT NOT NULL,
+    PRIMARY KEY (`equipment`),
+    UNIQUE (`serial_number`)
+);
+
+CREATE TABLE `request_category` (
+    `category` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `responsible_dept` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`category`)
+);
+
+CREATE TABLE `request_priority` (
+    `priority` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `sla_hours` INT NOT NULL,
+    PRIMARY KEY (`priority`)
+);
+
+CREATE TABLE `request_status` (
+    `status` INT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `color` VARCHAR(255) NOT NULL,
+    `is_final` BOOLEAN NOT NULL,
+    PRIMARY KEY (`status`)
+);
+
+CREATE TABLE `request` (
+    `request` INT NOT NULL AUTO_INCREMENT,
+    `request_date` DATE NOT NULL,
+    `customer` INT NOT NULL,
+    `problem_description` TEXT NOT NULL,
+    `project` INT NOT NULL,
+    `equipment` INT NOT NULL,
+    `assign_date` DATE NOT NULL,
+    `employee` INT NOT NULL,
+    `planned_date` DATE NOT NULL,
+    `execution_priority` VARCHAR(255) NOT NULL,
+    `close_date` DATE NULL,
+    `user_comment` TEXT NULL,
+    `category` INT NOT NULL,
+    `priority` INT NOT NULL,
+    `status` INT NOT NULL,
+    PRIMARY KEY (`request`)
+);
+
+CREATE TABLE `worklog` (
+    `request` INT NOT NULL,
+    `service` INT NOT NULL,
+    `hours` DECIMAL(10, 2) NOT NULL,
+    `fix_date` DATE NOT NULL,
+    `work_description` TEXT NOT NULL,
+    PRIMARY KEY (`request`, `service`)
+);
+
+-- Изменение структуры таблиц:
+ALTER TABLE `employee` ADD FOREIGN KEY (`position`) REFERENCES `position`(`position`);
+ALTER TABLE `employee` ADD FOREIGN KEY (`department`) REFERENCES `department`(`department`);
+ALTER TABLE `department` ADD FOREIGN KEY (`head_employee`) REFERENCES `employee`(`employee`);
+ALTER TABLE `project` ADD FOREIGN KEY (`manager`) REFERENCES `employee`(`employee`);
+ALTER TABLE `equipment` ADD FOREIGN KEY (`department`) REFERENCES `department`(`department`);
+
+ALTER TABLE `request` ADD FOREIGN KEY (`customer`) REFERENCES `customer`(`customer`);
+ALTER TABLE `request` ADD FOREIGN KEY (`category`) REFERENCES `request_category`(`category`);
+ALTER TABLE `request` ADD FOREIGN KEY (`priority`) REFERENCES `request_priority`(`priority`);
+ALTER TABLE `request` ADD FOREIGN KEY (`status`) REFERENCES `request_status`(`status`);
+ALTER TABLE `request` ADD FOREIGN KEY (`project`) REFERENCES `project`(`project`);
+ALTER TABLE `request` ADD FOREIGN KEY (`equipment`) REFERENCES `equipment`(`equipment`);
+ALTER TABLE `request` ADD FOREIGN KEY (`employee`) REFERENCES `employee`(`employee`);
+ALTER TABLE `worklog` ADD FOREIGN KEY (`request`) REFERENCES `request`(`request`);
+ALTER TABLE `worklog` ADD FOREIGN KEY (`service`) REFERENCES `service`(`service`);
+
+-- Вставка записей (INSERT INTO):
+INSERT INTO `customer` (`name`, `inn`, `contact_person`, `phone`, `email`, `address`, `contract_date`, `status`) VALUES
+('ЛУКОЙЛ-Пермнефтепродукт', '5902123456', 'Иванов И.И.', '(342) 111-22-33', 'info@lukoil-pnp.ru', 'г. Пермь, ул. Ленина, 1', '2026-08-15', 'Активный');
+
+INSERT INTO `position` (`name`, `salary`, `grade`) VALUES
+('Специалист техподдержки', 60000.00, '2'),
+('Руководитель проекта', 120000.00, '4');
+
+INSERT INTO `department` (`name`) VALUES ('Отдел поддержки Petronics');
+
+INSERT INTO `employee` (`full_name`, `department`, `phone`, `email`, `hire_date`, `status`, `position`) VALUES
+('Сидоров А.А.', 1, '(342) 222-33-44', 'sidorov@lukoil-tech.ru', '2025-02-01', 'Работает', 1);
+
+UPDATE `department` SET `head_employee` = 1 WHERE `department` = 1;
+
+INSERT INTO `request_category` (`name`, `responsible_dept`) VALUES ('Ошибка ПО', 'Отдел разработки');
+INSERT INTO `request_priority` (`name`, `sla_hours`) VALUES ('Высокий', 8);
+INSERT INTO `request_status` (`name`, `color`, `is_final`) VALUES ('Закрыта', 'Зелёный', TRUE);
+
+INSERT INTO `service` (`name`, `description`, `price`, `effective_date`) VALUES
+('Консультация', 'Консультация пользователя', 2500.00, '2026-01-01');
+
+INSERT INTO `project` (`name`, `type`, `description`, `start_date`, `planned_end_date`, `manager`, `status`) VALUES
+('Petronics 2.0', 'Petronics', 'Доработка модуля отчётов', '2026-06-01', '2026-12-31', 1, 'Активный');
+
+INSERT INTO `equipment` (`name`, `type`, `model`, `serial_number`, `commission_date`, `department`) VALUES
+('АЗС №123, терминал', 'Терминал', 'Verifone VX520', 'SN-2025-001', '2025-08-20', 1);
+
+INSERT INTO `request` (`request_date`, `customer`, `problem_description`, `project`, `equipment`, `assign_date`, `employee`, `planned_date`, `execution_priority`, `close_date`, `user_comment`, `category`, `priority`, `status`) VALUES
+('2026-09-09', 1, 'Ошибка при формировании отчёта', 1, 1, '2026-09-09', 1, '2026-09-11', 'Срочный', '2026-09-11', 'Проблема решена', 1, 1, 1);
+
+INSERT INTO `worklog` (`request`, `service`, `hours`, `fix_date`, `work_description`) VALUES
+(1, 1, 2.00, '2026-09-10', 'Проведена консультация');
+
+
+-- Обновление записей (UPDATE):
+UPDATE `customer` SET `contact_person` = 'Смирнов С.С.' WHERE `customer` = 1;
+UPDATE `service` SET `price` = `price` * 1.10 WHERE `name` = 'Консультация';
+UPDATE `employee` SET `status` = 'В отпуске' WHERE `employee` = 1;
+UPDATE `request` SET `planned_date` = '2026-09-20' WHERE `request` = 1;
+
+-- Удаление записей (DELETE FROM):
+DELETE FROM `request_category` WHERE `name` = 'Тестовая категория';
+DELETE FROM `worklog` WHERE `request` = 1 AND `service` = 1;
+
+-- Создание пользователей (CREATE USER) и наделение их правами (GRANT):
+CREATE USER 'support_spec'@'localhost' IDENTIFIED BY 'sup42';
+GRANT SELECT ON `lukoil_support`.`customer` TO 'support_spec'@'localhost';
+GRANT SELECT ON `lukoil_support`.`request_category` TO 'support_spec'@'localhost';
+GRANT SELECT ON `lukoil_support`.`request_priority` TO 'support_spec'@'localhost';
+GRANT SELECT ON `lukoil_support`.`request_status` TO 'support_spec'@'localhost';
+GRANT SELECT ON `lukoil_support`.`equipment` TO 'support_spec'@'localhost';
+GRANT SELECT ON `lukoil_support`.`project` TO 'support_spec'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON `lukoil_support`.`request` TO 'support_spec'@'localhost';
+GRANT SELECT, INSERT ON `lukoil_support`.`worklog` TO 'support_spec'@'localhost';
+
+CREATE USER 'petronics_head'@'localhost' IDENTIFIED BY 'pet77';
+GRANT SELECT ON `lukoil_support`.* TO 'petronics_head'@'localhost';
+GRANT UPDATE ON `lukoil_support`.`request` TO 'petronics_head'@'localhost';
+
+CREATE USER 'developer'@'localhost' IDENTIFIED BY 'dev87';
+GRANT SELECT ON `lukoil_support`.`request` TO 'developer'@'localhost';
+GRANT SELECT ON `lukoil_support`.`service` TO 'developer'@'localhost';
+GRANT SELECT, INSERT ON `lukoil_support`.`worklog` TO 'developer'@'localhost';
+
+CREATE USER 'manager'@'localhost' IDENTIFIED BY 'man15';
+GRANT SELECT ON `lukoil_support`.* TO 'manager'@'localhost';
+GRANT UPDATE ON `lukoil_support`.`request` TO 'manager'@'localhost';
+GRANT UPDATE ON `lukoil_support`.`project` TO 'manager'@'localhost';
+
+CREATE USER 'director'@'localhost' IDENTIFIED BY 'dir63';
+GRANT SELECT ON `lukoil_support`.* TO 'director'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Выгрузка метаданных (DESCRIBE):
+DESCRIBE `customer`;
+DESCRIBE `position`;
+DESCRIBE `department`;
+DESCRIBE `employee`;
+DESCRIBE `project`;
+DESCRIBE `service`;
+DESCRIBE `equipment`;
+DESCRIBE `request_category`;
+DESCRIBE `request_priority`;
+DESCRIBE `request_status`;
+DESCRIBE `request`;
+DESCRIBE `worklog`;
+
+-- Неявное соединение таблиц с фильтром данных (WHERE) и сортировкой (ORDER BY):
+
+-- Специалист техподдержки формирует список всех заявок конкретного заказчика (ЛУКОЙЛ-Пермнефтепродукт), чтобы понять историю обращений, отсортировав их от новых к старым:
+SELECT r.request AS "Номер заявки", c.name AS "Заказчик", r.request_date AS "Дата заявки", r.problem_description AS "Проблема" 
+FROM `request` r, `customer` c 
+WHERE r.customer = c.customer AND c.name = 'ЛУКОЙЛ-Пермнефтепродукт' 
+ORDER BY r.request_date DESC;
+
+-- Руководитель проекта смотрит заявки с высоким приоритетом, чтобы назначить их в первую очередь:
+SELECT r.request AS "Номер заявки", rp.name AS "Приоритет", r.planned_date AS "Планируемая дата", r.execution_priority AS "Срочность" 
+FROM `request` r, `request_priority` rp 
+WHERE r.priority = rp.priority AND rp.name = 'Высокий' 
+ORDER BY r.planned_date ASC;
+
+-- Заявки по конкретному проекту:
+SELECT r.request AS "Номер заявки", p.name AS "Проект", r.problem_description AS "Описание проблемы", r.request_date AS "Дата" 
+FROM `request` r, `project` p 
+WHERE r.project = p.project AND p.name = 'Petronics 2.0' 
+ORDER BY r.request_date DESC;
+
+-- Явное соединение таблиц (JOIN):
+
+-- Формирование полной карточки заявок (проблема, категория, статус, исполнитель) для директора:
+SELECT r.request AS "Номер", r.problem_description AS "Проблема", rc.name AS "Категория", rs.name AS "Статус", e.full_name AS "Исполнитель" 
+FROM `request` r 
+INNER JOIN `request_category` rc ON r.category = rc.category 
+INNER JOIN `request_status` rs ON r.status = rs.status 
+INNER JOIN `employee` e ON r.employee = e.employee;
+
+-- Журнал трудозатрат (кто, какую услугу выполнял и сколько часов потратил):
+SELECT w.fix_date AS "Дата", e.full_name AS "Сотрудник", s.name AS "Услуга", w.hours AS "Кол-во часов" 
+FROM `worklog` w 
+INNER JOIN `request` r ON w.request = r.request 
+INNER JOIN `employee` e ON r.employee = e.employee 
+INNER JOIN `service` s ON w.service = s.service;
+
+-- Вывести полный отчет по заявке для директора:
+SELECT r.request AS "Заявка", c.name AS "Заказчик", eq.name AS "Оборудование", e.full_name AS "Назначенный исполнитель" 
+FROM `request` r 
+INNER JOIN `customer` c ON r.customer = c.customer 
+INNER JOIN `equipment` eq ON r.equipment = eq.equipment 
+INNER JOIN `employee` e ON r.employee = e.employee;
+
+-- Агрегирующие операции (SUM, AVG, COUNT, MAX, MIN):
+
+-- Руководитель направления анализирует общую статистику:
+SELECT COUNT(*) AS "Всего заявок в базе", 
+       (SELECT AVG(price) FROM `service`) AS "Средняя стоимость услуги", 
+       (SELECT MAX(price) FROM `service`) AS "Самая дорогая услуга (руб)", 
+       (SELECT MIN(price) FROM `service`) AS "Самая дешевая услуга (руб)" 
+FROM `request`;
+
+-- Анализ трудозатрат: сколько часов потрачено в сумме и в среднем на одну услугу:
+SELECT SUM(hours) AS "Всего потрачено часов", AVG(hours) AS "Среднее часов на 1 услугу" 
+FROM `worklog`;
+
+-- Макс. и мин. оклады:
+SELECT MAX(salary) AS "Максимальный оклад", MIN(salary) AS "Минимальный оклад" 
+FROM `position`;
+
+-- Группировка GROUP BY и фильтрация HAVING:
+
+-- Количество заявок в каждом статусе:
+SELECT rs.name AS "Статус заявки", COUNT(r.request) AS "Количество заявок" 
+FROM `request_status` rs 
+LEFT JOIN `request` r ON rs.status = r.status 
+GROUP BY rs.name;
+
+-- Руководитель проекта ищет перегруженных сотрудников, кто отработал больше 2 часов:
+SELECT e.full_name AS "Сотрудник", SUM(w.hours) AS "Суммарные часы" 
+FROM `employee` e 
+INNER JOIN `request` r ON e.employee = r.employee 
+INNER JOIN `worklog` w ON r.request = w.request 
+GROUP BY e.full_name 
+HAVING SUM(w.hours) > 2;
+
+-- Выявление самых частых проблем:
+SELECT rc.name AS "Категория", COUNT(r.request) AS "Кол-во заявок" 
+FROM `request_category` rc 
+INNER JOIN `request` r ON rc.category = r.category 
+GROUP BY rc.name 
+HAVING COUNT(r.request) > 1;
+
+-- Выявление часто обращающихся клиентов:
+SELECT c.name AS "Заказчик", COUNT(r.request) AS "Всего заявок" 
+FROM `customer` c 
+INNER JOIN `request` r ON c.customer = r.customer 
+GROUP BY c.name 
+HAVING COUNT(r.request) > 1;
+
+-- Вложенные подзапросы (запрос в запросе), в т.ч. использовать операторы IN, ALL:
+
+-- IN: Найти всех заказчиков, у которых есть хотя бы одна заявка в статусе «в работе» (3):
+SELECT name AS "Заказчик", contact_person AS "Контактное лицо" 
+FROM `customer` 
+WHERE customer IN (
+    SELECT customer FROM `request` WHERE status = 3
+);
+
+-- IN: Найти ФИО сотрудников, которые когда-либо выполняли «диагностику» (3):
+SELECT full_name AS "Сотрудник", position AS "Должность" 
+FROM `employee` 
+WHERE employee IN (
+    SELECT r.employee FROM `request` r 
+    INNER JOIN `worklog` w ON r.request = w.request 
+    WHERE w.service = 3
+);
+
+-- ALL: Найти заявку, на которую было потрачено больше всего часов:
+SELECT request AS "Номер заявки", hours AS "Количество часов" 
+FROM `worklog` 
+WHERE hours >= ALL (SELECT hours FROM `worklog`);
+
+-- Использование «функций управления потоком» (IF, CASE) в соответствии с бизнес-логикой задач:
+
+-- CASE: Визуализация срочности заявки:
+SELECT request AS "Номер заявки", problem_description AS "Проблема", 
+       CASE 
+           WHEN priority = 4 THEN 'Горит!' 
+           WHEN priority = 1 THEN 'Горит!' 
+           WHEN priority = 3 THEN 'В порядке очереди' 
+           WHEN priority = 2 THEN 'В порядке очереди' 
+           ELSE 'Не указано' 
+       END AS "Срочность" 
+FROM `request`;
+
+-- CASE: Статус активности по цвету:
+SELECT r.problem_description AS "Проблема", 
+       CASE 
+           WHEN rs.color = 'Зеленый' THEN 'Решена' 
+           WHEN rs.color = 'Синий' THEN 'Поступила' 
+           WHEN rs.color = 'Желтый' THEN 'Решается' 
+           WHEN rs.color = 'Оранжевый' THEN 'Проверяется' 
+           ELSE 'Не указано' 
+       END AS "Активность" 
+FROM `request` r 
+INNER JOIN `request_status` rs ON r.status = rs.status;
+
+-- IF: Разделение цен на категории:
+SELECT name AS "Услуга", price AS "Цена", 
+       IF(price > 3000, 'Дорогая', 'Бюджетная') AS "Категория цены" 
+FROM `service`;
+
+-- IF: Проверка доступности сотрудника:
+SELECT full_name AS "Сотрудник", 
+       IF(status = 'Работает', 'На связи', 'Отсутствует') AS "Доступность" 
+FROM `employee`;
+
+-- Создание одного представления на наиболее популярный запрос (CREATE VIEW) и временное представление – оператор WITH:
+
+-- CREATE VIEW: Постоянный отчет по стоимости работ:
+CREATE VIEW `view_request_costs` AS 
+SELECT r.request AS "Номер заявки", e.full_name AS "Сотрудник", s.name AS "Услуга", w.hours AS "Часов", s.price AS "Цена за час", (w.hours * s.price) AS "Итоговая стоимость" 
+FROM `request` r 
+INNER JOIN `worklog` w ON r.request = w.request 
+INNER JOIN `service` s ON w.service = s.service 
+INNER JOIN `employee` e ON r.employee = e.employee;
+
+-- Вызов представления:
+SELECT "Номер заявки", "Сотрудник", "Итоговая стоимость" FROM `view_request_costs`;
+
+-- WITH: Сравнение заявок по двум конкретным проектам:
+WITH Petronics_2 AS (
+    SELECT r.request AS "Номер заявки", r.problem_description AS "Проблема", p.name AS "Проект" 
+    FROM `request` r 
+    INNER JOIN `project` p ON r.project = p.project 
+    WHERE p.name = 'Petronics 2.0'
+), 
+Petronics_Mobile AS (
+    SELECT r.request AS "Номер заявки", r.problem_description AS "Проблема", p.name AS "Проект" 
+    FROM `request` r 
+    INNER JOIN `project` p ON r.project = p.project 
+    WHERE p.name = 'Petronics Mobile'
+) 
+SELECT * FROM Petronics_2 
+UNION 
+SELECT * FROM Petronics_Mobile;
+
+-- Выполнить анализ и оптимизацию запросов средствами EXPLAIN и созданием индексов (CREATE INDEX):
+
+-- Оптимизация заявок за 15 сентября:
+EXPLAIN SELECT request, problem_description, execution_priority FROM `request` WHERE request_date = '2026-09-15';
+
+-- Создаем индекс:
+CREATE INDEX `idx_request_date` ON `request`(request_date);
+
+-- Проверка после индекса:
+EXPLAIN SELECT request, problem_description, execution_priority FROM `request` WHERE request_date = '2026-09-15';
+
+-- Обычный запрос для Аналитика (с русскими столбцами):
+SELECT request AS "Номер заявки", problem_description AS "Описание проблемы", execution_priority AS "Срочность" 
+FROM `request` 
+WHERE request_date = '2026-09-15';
+
+-- Использовать механизм транзакций (START TRANSACTION) для своей предметной области:
+
+-- Безопасное закрытие заявки. Если произойдет сбой, статус не изменится.
+START TRANSACTION;
+UPDATE `request` SET status = 1, user_comment = 'Проблема успешно решена' WHERE request = 2;
+SELECT request AS "Номер", status AS "Статус", user_comment AS "Комментарий" FROM `request` WHERE request = 2;
+COMMIT;
+
+-- Один из запросов на выборку записать и выполнить средствами операторов PREPARE, EXECUTE, DEALLOCATE:
+
+-- Безопасный поиск заявки по номеру:
+SET @sql_query = 'SELECT request AS "Номер", problem_description AS "Проблема", execution_priority AS "Срочность" FROM `request` WHERE request = ?';
+PREPARE stmt FROM @sql_query;
+SET @req_id = 3;
+EXECUTE stmt USING @req_id;
+DEALLOCATE PREPARE stmt;
